@@ -1,7 +1,9 @@
 import pygame
 import sys
+import math
 
-from Sprite import Orientation, Tank_Sprite
+from Tank import Tank
+from TankSprite import Orientation
 
 pygame.init()
 screen_width = 800
@@ -9,50 +11,59 @@ screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Thing")
 
-BLACK = (0, 0, 0)
+GREEN = (0, 102, 0)
 
 class Game:
-    square_size = 50
-    square_x = (screen_width - square_size) // 2
-    square_y = (screen_height - square_size) // 2
-    speed = 5
-    tank = Tank_Sprite(screen)
-    orientation = Orientation.LEFT    
-    # def __init__(self):
+	tank = Tank()
+	
+	def handleKeyboadInput(self):
+		keys = pygame.key.get_pressed()
+		direction_map = {
+			(True, False, False, False): Orientation.UP,
+			(False, True, False, False): Orientation.DOWN,
+			(False, False, True, False): Orientation.LEFT,
+			(False, False, False, True): Orientation.RIGHT,
+			(True, False, True, False): Orientation.LEFT_UP,
+			(True, False, False, True): Orientation.RIGHT_UP,
+			(False, True, True, False): Orientation.LEFT_DOWN,
+			(False, True, False, True): Orientation.RIGHT_DOWN,
+		}
+		up, down, left, right = keys[pygame.K_w], keys[pygame.K_s], keys[pygame.K_a], keys[pygame.K_d]
 
-    def handleKeyboadInput(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:
-            self.square_y -= self.speed
-            self.orientation = Orientation.UP
-        if keys[pygame.K_DOWN]:
-            self.square_y += self.speed
-            self.orientation = Orientation.DOWN
-        if keys[pygame.K_LEFT]:
-            self.square_x -= self.speed
-            self.orientation = Orientation.LEFT
-        if keys[pygame.K_RIGHT]:
-            self.square_x += self.speed
-            self.orientation = Orientation.RIGHT
-            
-    def mainLoop(self):
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-        
-            self.handleKeyboadInput()
-        
-            screen.fill(BLACK)
-            sprite = self.tank.getSprite(self.orientation)
-            screen.blit(sprite, (self.square_x, self.square_y))
-        
-            pygame.display.flip()
-            pygame.time.Clock().tick(60)
-        
-        pygame.quit()
-        sys.exit()
-        
+		orientation = direction_map.get((up, down, left, right))
+		if (orientation != None):
+			self.tank.update(orientation, None)
+			
+	def handleMouse(self):
+		self.tank.update(None, pygame.mouse.get_pos())
+		
+	def draw(self, entities):
+		for entity in entities:
+			for sprite in entity.draw():
+				screen.blit(sprite, entity.pos)
+			
+	def update(self, entities):
+		for entity in entities:
+			entity.update()
+			
+	def mainLoop(self):
+		running = True
+		while running:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					running = False
+		
+			screen.fill(GREEN)
+			self.handleKeyboadInput()
+			self.handleMouse()
+			self.draw([self.tank])
+			# self.update([self.tank])
+			
+			pygame.display.flip()
+			pygame.time.Clock().tick(60)
+		
+		pygame.quit()
+		sys.exit()
+		
 game = Game()
 game.mainLoop()
